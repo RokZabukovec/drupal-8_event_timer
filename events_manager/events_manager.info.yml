@@ -1,4 +1,4 @@
-name: Event manager
+name: Event timer
 core: 8.x
 type: module
-description: Module for showing days until event.
+description: Module for showing time until event.
