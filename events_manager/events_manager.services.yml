@@ -1,0 +1,3 @@
+services:
+  events_manager.event_manager:
+    class: Drupal\events_manager\EventManagerServices

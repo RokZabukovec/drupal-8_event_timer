@@ -1,0 +1,28 @@
+//    Offset event timestamp for users viewing timezone
+      $defaultTimezone = date_default_timezone_get();
+      $this_tz = new DateTimeZone($defaultTimezone);
+      $now = new DateTime("now", $this_tz);
+      $offset = $this_tz->getOffset($now);
+      $eventTimestamp = $date->getTimestamp() + $offset;
+
+//      current timestamp
+      $currentTime = new DateTime();
+      $currentTimestamp = $currentTime->getTimestamp();
+
+//      difference in time
+      if($currentTimestamp < $eventTimestamp){
+        define("secondsInDay", 86400);
+        define("secondsInHour", 3600);
+        $secondsRemaining = $eventTimestamp - $currentTimestamp;
+        if($secondsRemaining > secondsInDay){
+          $daysRemaining = floor($secondsRemaining / secondsInDay);
+          $output = $daysRemaining . " days until event";
+        }else{
+          $hoursRemaining = floor($secondsRemaining % (24 * 3600) / 3600);
+          $minutesRemaining = floor($secondsRemaining % (24 * 3600 * 3600) / 60) - $hoursRemaining * 60;
+          $output =  $hoursRemaining . " hours and ". $minutesRemaining.  " minutes until event";
+        }
+      }else{
+        $output = "Event already happend.";
+      }
+    }

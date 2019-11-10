@@ -1,0 +1,4 @@
+name: Event manager
+core: 8.x
+type: module
+description: Module for showing days until event.
