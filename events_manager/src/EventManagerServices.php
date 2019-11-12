@@ -5,6 +5,7 @@ namespace Drupal\events_manager;
 
 use DateTime;
 use DateTimeZone;
+use Exception;
 
 class EventManagerServices{
   const SECONDS_IN_DAY = 86400;
@@ -20,7 +21,7 @@ class EventManagerServices{
       $eventTimestamp = $this->getTimezoneOffsetTimestamp($dateTime);
       $currentTimestamp = $this->getCurrentTimestamp();
       return $this->getTimeRemaining($currentTimestamp, $eventTimestamp);
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       \Drupal::logger('events_manager')->debug($e->getMessage());
     }
     return Null;
@@ -40,7 +41,7 @@ class EventManagerServices{
       $now = new DateTime("now", $currentTimezone);
       $offset = $currentTimezone->getOffset($now);
       return $dateTime->getTimestamp() + $offset;
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       \Drupal::logger('events_manager')->debug($e->getMessage());
     }
     return Null;
@@ -50,7 +51,7 @@ class EventManagerServices{
    * Gets current timestamp of the user.
    *
    * @return int
-   * @throws \Exception
+   * @throws Exception
    */
   private function getCurrentTimestamp(){
     $currentTime = new DateTime();
@@ -65,7 +66,7 @@ class EventManagerServices{
    * @param $currentTimestamp
    * @param $eventTimestamp
    * @return string
-   * @throws \Exception
+   * @throws Exception
    */
   private function getTimeRemaining($currentTimestamp, $eventTimestamp){
     $output = '';
@@ -76,8 +77,10 @@ class EventManagerServices{
         $daysRemaining = floor($secondsRemaining / self::SECONDS_IN_DAY);
         $output = $daysRemaining . " days until event.";
       }else if($secondsRemaining < self::SECONDS_IN_DAY){
-        // Event is happening today.
-        $output = $this->isToday($eventTimestamp, $currentTimestamp);
+        // Event is happening in 24ur.
+        if($this->isToday($eventTimestamp, $currentTimestamp)){
+          $output = "Event starts today.";
+        }
       }
     }else{
       $output = "Event already happend.";
@@ -90,13 +93,13 @@ class EventManagerServices{
    *
    * @param $eventTimestamp
    * @param $currentTimestamp
-   * @return string; Resonse for displaying info for the user.
+   * @return boolean;
    */
   private function isToday($eventTimestamp, $currentTimestamp){
     if($eventTimestamp > $currentTimestamp && ($eventTimestamp - $currentTimestamp) < self::SECONDS_IN_DAY){
       $eventHour =  date('H', $eventTimestamp);
       $nowHour =  date('H', $currentTimestamp);
-      return $nowHour < $eventHour ? "Event is happening today": "Events starts tomorrow";
+      return $nowHour < $eventHour ? true: false;
     }
     return false;
   }
