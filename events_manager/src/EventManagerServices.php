@@ -2,13 +2,11 @@
 
 namespace Drupal\events_manager;
 
-
-use DateTime;
+use \DateTime;
 use DateTimeZone;
 use Exception;
 
 class EventManagerServices{
-  const SECONDS_IN_DAY = 86400;
   /**
    * Process DateTime object and returns the response string which is displayed in the view.
    * This method is called when using the service.
@@ -20,7 +18,7 @@ class EventManagerServices{
     try {
       $eventTimestamp = $this->getTimezoneOffsetTimestamp($dateTime);
       $currentTimestamp = $this->getCurrentTimestamp();
-      return $this->getTimeRemaining($currentTimestamp, $eventTimestamp);
+      return $this->getTimeRemaining($eventTimestamp, $currentTimestamp);
     } catch (Exception $e) {
       \Drupal::logger('events_manager')->debug($e->getMessage());
     }
@@ -48,7 +46,7 @@ class EventManagerServices{
   }
 
   /**
-   * Gets current timestamp of the user.
+   * Gets current timestamp.
    *
    * @return int
    * @throws Exception
@@ -60,47 +58,52 @@ class EventManagerServices{
   }
 
   /**
-   * Calculates the time remaining between two timstamsps.
-   * Based on the amount of time remaining it returns the string response.
+   * Based on the difference between current and event time method returns a string response message.
    *
    * @param $currentTimestamp
    * @param $eventTimestamp
    * @return string
    * @throws Exception
    */
-  private function getTimeRemaining($currentTimestamp, $eventTimestamp){
-    $output = '';
-    if($currentTimestamp < $eventTimestamp){
-      $secondsRemaining = $eventTimestamp - $currentTimestamp;
-      if($secondsRemaining > self::SECONDS_IN_DAY){
-        // More than one day remaining.
-        $daysRemaining = floor($secondsRemaining / self::SECONDS_IN_DAY);
-        $output = $daysRemaining . " days until event.";
-      }else if($secondsRemaining < self::SECONDS_IN_DAY){
-        // Event is happening in 24ur.
-        if($this->isToday($eventTimestamp, $currentTimestamp)){
-          $output = "Event starts today.";
-        }
-      }
-    }else{
-      $output = "Event already happend.";
+  private function getTimeRemaining($eventTimestamp, $currentTimestamp){
+    $output = "";
+    $daysFrom = $this->getDaysFrom($eventTimestamp);
+    switch($daysFrom){
+      case $daysFrom == 0:
+        $output = $currentTimestamp < $eventTimestamp ? "Event is happening today.": "Event already happend.";
+        break;
+      case $daysFrom == 1:
+        $output = "Event is happening tommorow.";
+        break;
+      case $daysFrom < 0:
+        $output = "Event already happend.";
+        break;
+      case $daysFrom > 1:
+        $daysFrom = (int)$daysFrom;
+        $output = "{$daysFrom} days from event.";
+        break;
     }
     return $output;
   }
 
   /**
-   * Determines if the difference in timestamps is less than 24ur and if the current time is this day.
+   * Determines the difference in days from timestamps.
    *
    * @param $eventTimestamp
-   * @param $currentTimestamp
-   * @return boolean;
+   * @return string;
+   * @throws Exception
    */
-  private function isToday($eventTimestamp, $currentTimestamp){
-    if($eventTimestamp > $currentTimestamp && ($eventTimestamp - $currentTimestamp) < self::SECONDS_IN_DAY){
-      $eventHour =  date('H', $eventTimestamp);
-      $nowHour =  date('H', $currentTimestamp);
-      return $nowHour < $eventHour ? true: false;
+  private function getDaysFrom($eventTimestamp){
+    if(is_numeric($eventTimestamp)){
+      $now = new DateTime();
+      $now->setTime(0, 0, 0); // reset time to so I can consistenly compare two dates.
+      $event = new DateTime();
+      $event->setTimestamp($eventTimestamp);
+      $event->setTime( 0, 0, 0 ); // reset time to so I can consistenly compare two dates.
+      $difference = $now->diff($event);
+      return $difference->format( "%R%a" );
     }
-    return false;
+    return null;
   }
+
 }

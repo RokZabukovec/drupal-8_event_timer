@@ -26,27 +26,32 @@ class EventManager extends BlockBase{
    * empty array, or an empty array with #cache set (with cacheability metadata
    * indicating the circumstances for it being empty).
    *
-   * @return array
+   * @return array|bool
    *   A renderable array representing the content of the block.
    *
    * @throws \Exception
    * @see \Drupal\block\BlockViewBuilder
    */
   public function build(){
-    $node = \Drupal::routeMatch()->getParameter('node');
-    if($node->getType() == "event") {
-      $dateRAW = $node->field_event_date->value;
-      $date = new DateTime($dateRAW);
-      $service = \Drupal::service('events_manager.event_manager');
-      $output = $service->eventTimer($date);
-    }
+    $route = $node = \Drupal::routeMatch();
+    $node = $route->getParameter('node');
+      if($node != null && $node->getType() == "event") {
+        $dateRAW = $node->field_event_date->value;
+        $date = new DateTime($dateRAW);
+        $service = \Drupal::service('events_manager.event_manager');
+        $output = $service->eventTimer($date);
+        return [
+          '#markup' => $output,
+          '#title' => 'Event timer',
+          '#cache' => [
+            'max-age' => 0,
+          ],
+        ];
+      }
     return [
-      '#markup' => $output,
-      '#title' => 'Event timer',
       '#cache' => [
         'max-age' => 0,
       ],
     ];
   }
-
 }
