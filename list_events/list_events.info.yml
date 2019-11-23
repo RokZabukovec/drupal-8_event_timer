@@ -1,0 +1,4 @@
+name: List events
+type: module
+description: Events list page
+core: 8.x

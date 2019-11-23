@@ -1,0 +1,7 @@
+list_events.list_events:
+  path: '/events/list'
+  defaults:
+    _controller: '\Drupal\list_events\Controller\ListEvents::page'
+    _title: 'Hello World'
+  requirements:
+    _permission: 'access content'
